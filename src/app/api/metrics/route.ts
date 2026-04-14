@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
-import Incident from "@/models/Incident";
+import { findAll } from "@/lib/store";
 
 export async function GET() {
-  await dbConnect();
-
-  const incidents = await Incident.find().lean();
+  const incidents = findAll();
 
   const total = incidents.length;
   const open = incidents.filter((i) => i.status === "open").length;
