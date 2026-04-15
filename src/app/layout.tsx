@@ -3,6 +3,7 @@ import Link from "next/link";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
 import UserMenu from "@/components/UserMenu";
+import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
   title: "Ops Dashboard - Monitoreo Operativo",
@@ -14,6 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es">
       <body className="bg-gray-900 min-h-screen text-gray-100">
         <AuthProvider>
+          <Toaster position="top-right" toastOptions={{ style: { borderRadius: '12px', padding: '12px 16px', fontSize: '14px', background: '#1f2937', color: '#f3f4f6' } }} />
           <nav className="bg-gray-800 border-b border-gray-700 sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
               <Link href="/" className="text-lg font-bold text-emerald-400">

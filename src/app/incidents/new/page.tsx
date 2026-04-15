@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function NewIncidentPage() {
   const router = useRouter();
@@ -27,11 +28,12 @@ export default function NewIncidentPage() {
     });
 
     if (res.ok) {
+      toast.success('Incidencia registrada');
       router.push("/incidents");
       router.refresh();
     } else {
       setSaving(false);
-      alert("Error al registrar incidencia");
+      toast.error("Error al registrar incidencia");
     }
   }
 
