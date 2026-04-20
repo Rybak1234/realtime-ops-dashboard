@@ -101,6 +101,29 @@ async function seed() {
 
   await Incident.insertMany(incidents);
   console.log(`✅ Created ${incidents.length} demo incidents`);
+
+  // Create alerts
+  const AlertSchema = new mongoose.Schema(
+    {
+      name: String,
+      condition: { metric: String, operator: String, threshold: Number },
+      severity: { type: String, enum: ["low", "medium", "high", "critical"] },
+      enabled: { type: Boolean, default: true },
+    },
+    { timestamps: true }
+  );
+  const Alert = mongoose.model("Alert", AlertSchema);
+  await Alert.deleteMany({});
+
+  await Alert.insertMany([
+    { name: "Incidencias críticas > 5 en 1 hora", condition: { metric: "incidents_critical", operator: ">", threshold: 5 }, severity: "critical", enabled: true },
+    { name: "Tiempo de respuesta API > 2000ms", condition: { metric: "response_time_ms", operator: ">", threshold: 2000 }, severity: "high", enabled: true },
+    { name: "Uso de CPU > 90%", condition: { metric: "cpu_usage", operator: ">", threshold: 90 }, severity: "high", enabled: true },
+    { name: "Tasa de errores > 5%", condition: { metric: "error_rate", operator: ">", threshold: 5 }, severity: "medium", enabled: true },
+    { name: "Total incidencias abiertas > 20", condition: { metric: "incidents_total", operator: ">", threshold: 20 }, severity: "medium", enabled: false },
+  ]);
+  console.log("✅ Created 5 demo alert rules");
+
   console.log("🎉 Seed completed!");
 
   await mongoose.disconnect();

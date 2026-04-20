@@ -3,8 +3,20 @@ import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import { signToken } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip") || "unknown";
+  const { allowed, resetIn } = checkRateLimit(`login:${ip}`, 5, 60000);
+  if (!allowed) {
+    const seconds = Math.ceil(resetIn / 1000);
+    return NextResponse.json(
+      { error: `Demasiados intentos. Intente de nuevo en ${seconds} segundos.` },
+      { status: 429 }
+    );
+  }
+
   await dbConnect();
   const { email, password } = await req.json();
   if (!email || !password) return NextResponse.json({ error: "Email y contraseña requeridos" }, { status: 400 });

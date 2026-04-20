@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { SeverityChart, AreaChart, TrendChart } from "@/components/Charts";
+import {
+  HiPlusCircle, HiBell, HiArrowDownTray, HiCheckCircle,
+  HiExclamationTriangle, HiArrowPath, HiShieldCheck,
+} from "react-icons/hi2";
 
 interface Metrics {
   total: number;
@@ -14,18 +19,34 @@ interface Metrics {
   avgResolutionHours: number;
 }
 
+interface Activity {
+  _id: string;
+  action: string;
+  description: string;
+  user: string;
+  timestamp: string;
+}
+
+const actionIcons: Record<string, React.ReactNode> = {
+  incident_created: <HiExclamationTriangle className="w-3.5 h-3.5 text-red-400" />,
+  status_changed: <HiArrowPath className="w-3.5 h-3.5 text-yellow-400" />,
+  incident_resolved: <HiCheckCircle className="w-3.5 h-3.5 text-green-400" />,
+};
+
 export default function DashboardPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [alertCount, setAlertCount] = useState(0);
 
   useEffect(() => {
-    fetch("/api/metrics")
-      .then((r) => r.json())
-      .then(setMetrics);
+    fetch("/api/metrics").then((r) => r.json()).then(setMetrics);
+    fetch("/api/activity").then((r) => r.json()).then((data) => setActivities(data.slice(0, 5)));
+    fetch("/api/alerts").then((r) => r.json()).then((data) => {
+      if (Array.isArray(data)) setAlertCount(data.filter((a: { enabled: boolean }) => a.enabled).length);
+    });
 
     const interval = setInterval(() => {
-      fetch("/api/metrics")
-        .then((r) => r.json())
-        .then(setMetrics);
+      fetch("/api/metrics").then((r) => r.json()).then(setMetrics);
     }, 30000);
 
     return () => clearInterval(interval);
@@ -48,11 +69,25 @@ export default function DashboardPage() {
             Actualización automática cada 30s · Última: {new Date().toLocaleTimeString("es")}
           </p>
         </div>
-        <a
-          href="/api/export"
-          className="bg-gray-700 text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-600 transition text-sm"
-        >
-          📥 Exportar CSV
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 bg-green-900/30 text-green-400 px-3 py-1.5 rounded-lg text-xs font-medium border border-green-800/30">
+            <HiShieldCheck className="w-4 h-4" />
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-dot" />
+            Sistemas Operacionales
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="flex gap-3 mb-6">
+        <Link href="/incidents/new" className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition text-sm">
+          <HiPlusCircle className="w-4 h-4" /> Nueva Incidencia
+        </Link>
+        <Link href="/alerts" className="flex items-center gap-2 bg-gray-700 text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-600 transition text-sm">
+          <HiBell className="w-4 h-4" /> Alertas {alertCount > 0 && <span className="bg-emerald-600 text-white text-xs px-1.5 rounded-full">{alertCount}</span>}
+        </Link>
+        <a href="/api/export" className="flex items-center gap-2 bg-gray-700 text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-600 transition text-sm">
+          <HiArrowDownTray className="w-4 h-4" /> Exportar CSV
         </a>
       </div>
 
@@ -92,9 +127,34 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="bg-gray-800 rounded-xl border border-gray-700 p-5">
-        <h2 className="text-sm font-semibold text-gray-300 mb-4">Incidencias por Área</h2>
-        <AreaChart data={metrics.byArea} />
+      <div className="grid lg:grid-cols-3 gap-6">
+        <div className="bg-gray-800 rounded-xl border border-gray-700 p-5 lg:col-span-2">
+          <h2 className="text-sm font-semibold text-gray-300 mb-4">Incidencias por Área</h2>
+          <AreaChart data={metrics.byArea} />
+        </div>
+
+        {/* Recent Activity Feed */}
+        <div className="bg-gray-800 rounded-xl border border-gray-700 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-gray-300">Actividad Reciente</h2>
+            <Link href="/activity" className="text-xs text-emerald-400 hover:underline">Ver todo</Link>
+          </div>
+          <div className="space-y-3">
+            {activities.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">Sin actividad reciente</p>
+            ) : (
+              activities.map((a) => (
+                <div key={a._id} className="flex items-start gap-2">
+                  <div className="mt-0.5">{actionIcons[a.action] || actionIcons.incident_created}</div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-gray-300 truncate">{a.description}</p>
+                    <p className="text-[10px] text-gray-500">{new Date(a.timestamp).toLocaleString("es")}</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

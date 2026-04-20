@@ -123,8 +123,12 @@ export default function IncidentsPage() {
             </thead>
             <tbody className="divide-y divide-gray-700">
               {incidents.map((inc) => (
-                <tr key={inc._id} className="hover:bg-gray-700/50">
-                  <td className="px-5 py-3 text-sm font-medium text-gray-100">{inc.title}</td>
+                <tr key={inc._id} className="hover:bg-gray-700/50 cursor-pointer" onClick={() => window.location.href = `/incidents/${inc._id}`}>
+                  <td className="px-5 py-3 text-sm font-medium text-gray-100">
+                    <Link href={`/incidents/${inc._id}`} className="hover:text-emerald-400 transition">
+                      {inc.title}
+                    </Link>
+                  </td>
                   <td className="px-5 py-3 text-sm text-gray-300">{inc.area}</td>
                   <td className="px-5 py-3">
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${severityColor[inc.severity]}`}>
